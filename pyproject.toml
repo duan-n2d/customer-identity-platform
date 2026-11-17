@@ -45,3 +45,6 @@ testpaths = ["tests"]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
 markers = ["slow: end-to-end tests that run the full pipeline"]
+
+[tool.ruff.lint.per-file-ignores]
+"databricks/*" = ["F821", "E501", "E402"]  # notebook globals: spark, dbutils, display
