@@ -17,15 +17,15 @@ Synthetic Vietnamese customer data: **400 people**, 1,474 source records across 
 | Share of true pairs that share any linking evidence (the data's ceiling) | 37.10% |
 | Person-ID stability, record level, day over day | **100.00% to 100.00%** |
 | Same, with a naive ID (smallest record key of the cluster) | 99.31% to 99.31% |
-| Day-0 load: 1,439 records, train + match + IDs | 9 s |
-| Daily run: ~1,474 records, full re-match | 4 s |
+| Day-0 load: 1,439 records, train + match + IDs | 3 s |
+| Daily run: ~1,474 records, full re-match | 1 s |
 
 ## Day by day
 
 | day | records | people | precision | linkable recall | ID unchanged | naive ID unchanged | new/merge/split | seconds |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 1439 | 913 | 0.9804 | 0.9516 | 1.0000 | 1.0000 | 913/0/0 | 8.8 |
-| 1 | 1474 | 931 | 0.9802 | 0.9513 | 1.0000 | 0.9931 | 18/0/0 | 3.5 |
+| 0 | 1439 | 913 | 0.9804 | 0.9516 | 1.0000 | 1.0000 | 913/0/0 | 2.7 |
+| 1 | 1474 | 931 | 0.9802 | 0.9513 | 1.0000 | 0.9931 | 18/0/0 | 1.0 |
 
 `ID unchanged` is the share of records that kept their person ID since the previous day (day 0 has nothing to compare with). `naive ID` is what you get if the ID is just the smallest record key of the cluster: it changes whenever an earlier record is back-filled or two clusters merge.
 
@@ -113,7 +113,7 @@ Day-0 pipeline (landing, staging, hubs, model training, scoring, rules, clusteri
     "max_cluster_size": 25
   },
   "settings": {
-    "data_dir": "C:\\Users\\dnguye22\\AppData\\Local\\Temp\\pytest-of-dnguye22\\pytest-22\\test_the_cli_demo_runs_every_s0",
+    "data_dir": "C:\\Users\\dnguye22\\AppData\\Local\\Temp\\pytest-of-dnguye22\\pytest-23\\test_the_cli_demo_runs_every_s0",
     "hub_min_records": 8,
     "hub_min_distinct_names": 5,
     "predict_threshold": 0.5,

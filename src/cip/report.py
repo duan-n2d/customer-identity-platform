@@ -129,8 +129,8 @@ def evaluation_md(run: dict, ablation: pd.DataFrame | None, bench: pd.DataFrame 
         parts += [
             "## Ablation: what each component is worth",
             "",
-            "3,000 people per world, mean over the seeds in `seeds` (columns ending in `_sd` are the "
-            "standard deviation across seeds). One component changed at a time. Rows 1-6 add "
+            "3,000 people per world, mean over the seeds in `seeds` (columns ending in `_sd` are "
+            "the standard deviation across seeds). One component changed at a time. Rows 1-6 add "
             "components cumulatively; the rest remove or add one component to the default profile. "
             "Test seeds 7, 21, 22; dev seeds are in `results/ablation_dev.csv`.",
             "",

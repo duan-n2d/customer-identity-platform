@@ -21,8 +21,8 @@ Synthetic Vietnamese customer data: **400 people**, 1,474 source records across 
 | Share of true pairs that share any linking evidence (the data's ceiling) | 37.10% |
 | Person-ID stability, record level, day over day | **100.00% to 100.00%** |
 | Same, with a naive ID (smallest record key of the cluster) | 99.31% to 99.31% |
-| Day-0 load: 1,439 records, train + match + IDs | 9 s |
-| Daily run: ~1,474 records, full re-match | 4 s |
+| Day-0 load: 1,439 records, train + match + IDs | 3 s |
+| Daily run: ~1,474 records, full re-match | 1 s |
 <!-- RESULTS:END -->
 
 Full breakdown (per day, error causes, ablation, scale): [docs/evaluation.md](docs/evaluation.md).
