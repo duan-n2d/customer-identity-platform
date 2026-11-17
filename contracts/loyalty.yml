@@ -1,0 +1,16 @@
+source: loyalty
+description: Loyalty programme members. Enrolment captures phone and date of birth.
+owner: marketing
+primary_key: member_no
+columns:
+  member_no:     {type: string, nullable: false}
+  full_name:     {type: string, nullable: false}
+  phone:         {type: string, nullable: true, max_null_rate: 0.10}
+  dob:           {type: string, nullable: true, max_null_rate: 0.30}
+  enrolled_date: {type: date,   nullable: false}
+  ingested_at:   {type: timestamp, nullable: false}
+freshness:
+  max_lag_days: 2
+volume:
+  min_ratio_vs_median: 0.1
+  max_ratio_vs_median: 10

@@ -45,10 +45,14 @@ class WorldConfig:
     daily_new_person_rate: float = 0.01
     daily_event_rate: float = 0.006
     late_arrival_share: float = 0.05
-    drift_day: int | None = None  # from this day the CRM feed renames `phone` (applied when writing landing files)
+    drift_day: int | None = (
+        None  # from this day the CRM feed renames `phone` (applied when writing landing files)
+    )
     # per-source noise
     p_pos_no_phone: float = 0.40
-    p_pos_store_phone: float = 0.50  # of those without a phone, share where the cashier typed the store number
+    p_pos_store_phone: float = (
+        0.50  # of those without a phone, share where the cashier typed the store number
+    )
     p_pos_placeholder: float = 0.03
     p_pos_no_name: float = 0.25
     p_phone_digit_typo: float = 0.015
@@ -101,7 +105,9 @@ class World:
     # ------------------------------------------------------------------ construction
     def _new_number(self) -> str:
         while True:
-            prefix = vn_data.MOBILE_PREFIXES[int(self.rng.integers(0, len(vn_data.MOBILE_PREFIXES)))]
+            prefix = vn_data.MOBILE_PREFIXES[
+                int(self.rng.integers(0, len(vn_data.MOBILE_PREFIXES)))
+            ]
             number = prefix + "".join(str(int(x)) for x in self.rng.integers(0, 10, size=7))
             if number in self._used_numbers or not normalize_phone(number).valid:
                 continue
@@ -113,7 +119,11 @@ class World:
         while True:
             style = int(self.rng.integers(0, 3))
             suffix = str(int(self.rng.integers(1, 99)))
-            local = [f"{local_base}{suffix}", f"{local_base.replace('.', '')}{suffix}", f"{p.given.lower()}{p.dob[2:4]}{suffix}"][style]
+            local = [
+                f"{local_base}{suffix}",
+                f"{local_base.replace('.', '')}{suffix}",
+                f"{p.given.lower()}{p.dob[2:4]}{suffix}",
+            ][style]
             local = strip_diacritics(local).lower()
             email = f"{local}@{_weighted(self.rng, vn_data.EMAIL_DOMAINS)}"
             if email not in self._used_emails:
@@ -173,7 +183,9 @@ class World:
                 p.phones.append(PhoneSpan(self._new_number(), start_day=-10_000))
 
         # phone changes: same person, new number from a cut-over day
-        changers = rng.choice(cfg.n_persons, size=int(cfg.phone_changed_share * cfg.n_persons), replace=False)
+        changers = rng.choice(
+            cfg.n_persons, size=int(cfg.phone_changed_share * cfg.n_persons), replace=False
+        )
         for i in changers:
             p = self.persons[int(i)]
             if not p.phones:
@@ -211,7 +223,9 @@ class World:
     # ------------------------------------------------------------------ helpers
     def phone_at(self, p: Person, day: int) -> tuple[str | None, str]:
         """The number this person would give on ``day``, and which kind of number it is."""
-        active = [s for s in p.phones if s.start_day <= day and (s.end_day is None or day < s.end_day)]
+        active = [
+            s for s in p.phones if s.start_day <= day and (s.end_day is None or day < s.end_day)
+        ]
         shared = self.households.get(p.household) if p.household else None
         if shared and (not active or self.rng.random() < 0.4):
             return shared, "household"
@@ -247,10 +261,18 @@ def _email_noise(rng: np.random.Generator, email: str) -> str:
 # source-record builders. Each returns (row, truth_flags)
 # ---------------------------------------------------------------------------------------
 _SOURCE_NAME_NOISE = {
-    "pos": dict(p_drop_diacritics=0.70, p_upper=0.20, p_given_first=0.05, p_drop_middle=0.30, p_typo=0.08),
-    "ecom": dict(p_drop_diacritics=0.40, p_upper=0.05, p_given_first=0.15, p_drop_middle=0.20, p_typo=0.04),
-    "crm": dict(p_drop_diacritics=0.15, p_upper=0.02, p_given_first=0.03, p_drop_middle=0.10, p_typo=0.03),
-    "loyalty": dict(p_drop_diacritics=0.25, p_upper=0.10, p_given_first=0.05, p_drop_middle=0.15, p_typo=0.03),
+    "pos": dict(
+        p_drop_diacritics=0.70, p_upper=0.20, p_given_first=0.05, p_drop_middle=0.30, p_typo=0.08
+    ),
+    "ecom": dict(
+        p_drop_diacritics=0.40, p_upper=0.05, p_given_first=0.15, p_drop_middle=0.20, p_typo=0.04
+    ),
+    "crm": dict(
+        p_drop_diacritics=0.15, p_upper=0.02, p_given_first=0.03, p_drop_middle=0.10, p_typo=0.03
+    ),
+    "loyalty": dict(
+        p_drop_diacritics=0.25, p_upper=0.10, p_given_first=0.05, p_drop_middle=0.15, p_typo=0.03
+    ),
 }
 
 
@@ -407,7 +429,9 @@ def generate(cfg: WorldConfig | None = None) -> GeneratedData:
         for i in rng.choice(len(existing), size=n_events, replace=False):
             p = existing[int(i)]
             r = rng.random()
-            source = "pos" if r < 0.6 else ("loyalty" if r < 0.8 else ("ecom" if p.emails else "pos"))
+            source = (
+                "pos" if r < 0.6 else ("loyalty" if r < 0.8 else ("ecom" if p.emails else "pos"))
+            )
             emit(p, source, d)
 
     sources = {s: pd.DataFrame(r) for s, r in rows.items()}

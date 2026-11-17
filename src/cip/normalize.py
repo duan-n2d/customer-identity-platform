@@ -16,6 +16,8 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import date
 
+from rapidfuzz.distance import JaroWinkler
+
 # --------------------------------------------------------------------------- phones
 # Vietnamese mobile prefixes (first three digits of the 10-digit national number).
 _VN_MOBILE_PREFIXES = frozenset(
@@ -40,7 +42,7 @@ class PhoneResult:
 
 
 def _has_long_run(digits: str, n: int = 7) -> bool:
-    """True for placeholder-looking numbers: >= n identical digits, or an ascending/descending run."""
+    """True for placeholder-looking numbers: n+ identical digits, or an ascending/descending run."""
     if re.search(rf"(\d)\1{{{n - 1},}}", digits):
         return True
     for i in range(len(digits) - n + 1):
@@ -140,7 +142,7 @@ _DOB_FORMATS = (
 
 
 def normalize_dob(raw: str | None, today: date | None = None) -> str | None:
-    """Return an ISO date string or None. Rejects implausible ages (before 1900 or in the future)."""
+    """Return an ISO date string or None. Rejects dates before 1900 or in the future."""
     if raw is None:
         return None
     text = str(raw).strip()
@@ -181,3 +183,34 @@ def token(value: str | None, key: str) -> str | None:
     if value is None:
         return None
     return hmac.new(key.encode(), value.encode(), hashlib.sha256).hexdigest()[:32]
+
+
+# --------------------------------------------------------------------------- name conflicts
+def _tokens_similar(x: str, y: str, similarity: float) -> bool:
+    """Same token, or a typo of it. Vietnamese name tokens are short, so a one-letter difference
+    in a token of three letters or fewer (``an``/``anh``, ``van``/``lan``) is far more likely to
+    be a different name than a typo, and only exact matches count there."""
+    if x == y:
+        return True
+    return min(len(x), len(y)) >= 4 and JaroWinkler.similarity(x, y) >= similarity
+
+
+def names_conflict(key_a: str | None, key_b: str | None, similarity: float = 0.90) -> bool:
+    """True when two name keys are clearly *different people*, tolerating typos and omissions.
+
+    Tokens both names share (typically the family name) are ignored. If one name is then fully
+    contained in the other (a dropped middle name), they are compatible. Otherwise the leftover
+    tokens must contain at least one similar pair (a typo), or the names conflict.
+
+    ``nguyen van an`` vs ``nguyen thi lan``   -> conflict (two family members)
+    ``hong nguyen nhung`` vs ``cong nguyen phuc`` -> conflict
+    ``nguyen van an`` vs ``nguyen an``        -> compatible (middle name dropped)
+    ``nguyen thi nhung`` vs ``nguyen thi nhugn`` -> compatible (typo in a long token)
+    """
+    if not key_a or not key_b:
+        return False
+    a, b = set(key_a.split()), set(key_b.split())
+    left_a, left_b = a - b, b - a
+    if not left_a or not left_b:
+        return False
+    return not any(_tokens_similar(x, y, similarity) for x in left_a for y in left_b)

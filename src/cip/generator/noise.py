@@ -62,7 +62,7 @@ def noisy_name(
 
 
 def format_phone(rng: np.random.Generator, national: str) -> str:
-    """Render a 10-digit national number ``0XXXXXXXXX`` in one of the formats seen in real exports."""
+    """Render a 10-digit number ``0XXXXXXXXX`` in one of the formats seen in real exports."""
     d = national
     forms = [
         d,

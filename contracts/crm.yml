@@ -1,0 +1,17 @@
+source: crm
+description: CRM contacts maintained by sales reps. Highest-trust source for names and dates of birth.
+owner: sales-operations
+primary_key: contact_id
+columns:
+  contact_id:   {type: string, nullable: false}
+  full_name:    {type: string, nullable: false}
+  email:        {type: string, nullable: true, max_null_rate: 0.75}
+  phone:        {type: string, nullable: true, max_null_rate: 0.20}
+  dob:          {type: string, nullable: true, max_null_rate: 0.25}
+  updated_date: {type: date,   nullable: false}
+  ingested_at:  {type: timestamp, nullable: false}
+freshness:
+  max_lag_days: 2
+volume:
+  min_ratio_vs_median: 0.1
+  max_ratio_vs_median: 10

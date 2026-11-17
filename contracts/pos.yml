@@ -1,0 +1,16 @@
+source: pos
+description: Point-of-sale transactions. Customer identifiers are typed by cashiers, so they are sparse and noisy.
+owner: retail-operations
+primary_key: txn_id
+columns:
+  txn_id:         {type: string, nullable: false}
+  store_id:       {type: string, nullable: false}
+  customer_name:  {type: string, nullable: true, max_null_rate: 0.45}
+  customer_phone: {type: string, nullable: true, max_null_rate: 0.60}
+  txn_date:       {type: date,   nullable: false}
+  ingested_at:    {type: timestamp, nullable: false}
+freshness:
+  max_lag_days: 2
+volume:
+  min_ratio_vs_median: 0.1
+  max_ratio_vs_median: 10

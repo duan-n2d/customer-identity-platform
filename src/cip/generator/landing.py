@@ -27,7 +27,9 @@ def fingerprint(data: GeneratedData) -> str:
         frame = data.sources[name].sort_index(axis=1)
         h.update(name.encode())
         h.update(pd.util.hash_pandas_object(frame.astype(str), index=False).values.tobytes())
-    h.update(pd.util.hash_pandas_object(data.truth_records.astype(str), index=False).values.tobytes())
+    h.update(
+        pd.util.hash_pandas_object(data.truth_records.astype(str), index=False).values.tobytes()
+    )
     return h.hexdigest()[:16]
 
 
