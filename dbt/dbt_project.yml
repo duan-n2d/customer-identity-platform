@@ -1,0 +1,29 @@
+name: cip
+version: "0.1.0"
+config-version: 2
+profile: cip
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target"]
+
+models:
+  cip:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+
+seeds:
+  cip:
+    source_trust:
+      +column_types:
+        trust: integer
+
+vars:
+  # reference date for age bands, fixed so the demo output is reproducible
+  as_of_date: "2026-06-01"

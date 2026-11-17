@@ -243,3 +243,36 @@ def test_ids_are_a_function_of_clusters_and_every_cluster_has_exactly_one(partit
         assert m.nunique() == len(set(mapping.values()))  # one cluster per ID
         active = state.registry[state.registry["status"] == "active"]["person_id"]
         assert set(m) <= set(active)
+
+
+# ------------------------------------------------------------- name conflict and cannot-link
+
+
+def test_names_conflict_tolerates_typos_and_dropped_middle_names_but_not_relatives():
+    from cip.normalize import names_conflict
+
+    assert names_conflict("an nguyen van", "lan nguyen thi")  # two family members
+    assert names_conflict("hong nguyen nhung", "cong nguyen phuc")  # short tokens: exact only
+    assert not names_conflict("an nguyen van", "an nguyen")  # middle name dropped
+    assert not names_conflict("nguyen nhung thi", "nguyen nhugn thi")  # typo in a long token
+    assert not names_conflict(None, "nguyen van an")  # missing evidence is not a conflict
+
+
+def test_name_constraint_refuses_a_merge_of_different_names():
+    keys = ["a", "b"]
+    kwargs = dict(threshold=0.9, max_cluster_size=10)
+    e = edges(("a", "b", 0.99))
+    names = {"a": "an nguyen van", "b": "lan nguyen thi"}
+    free = constrained_clusters(keys, {}, e, **kwargs)
+    assert free.labels["a"] == free.labels["b"]
+    held = constrained_clusters(keys, {}, e, name_by_key=names, **kwargs)
+    assert held.labels["a"] != held.labels["b"]
+    assert list(held.rejected["reason"]) == ["name_conflict"]
+
+
+def test_cannot_link_blocks_a_pair_even_through_a_chain():
+    keys = ["a", "b", "c"]
+    e = edges(("a", "b", 0.99), ("b", "c", 0.95))
+    cannot = pd.DataFrame([("a", "c")], columns=["unique_id_l", "unique_id_r"])
+    res = constrained_clusters(keys, {}, e, threshold=0.9, max_cluster_size=10, cannot_link=cannot)
+    assert res.labels["a"] == res.labels["b"] != res.labels["c"]

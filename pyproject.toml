@@ -19,6 +19,7 @@ dependencies = [
   "rapidfuzz>=3",
   "pyyaml>=6",
   "fastapi>=0.110",
+  "uvicorn>=0.29",
   "deltalake>=0.18",
 ]
 

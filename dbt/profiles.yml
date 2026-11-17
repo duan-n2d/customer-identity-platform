@@ -1,0 +1,9 @@
+cip:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # the Python pipeline writes this file; dbt reads staging/resolve and builds the gold schema
+      path: "{{ env_var('CIP_DB_PATH', '../data/warehouse.duckdb') }}"
+      schema: gold
+      threads: 1

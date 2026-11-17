@@ -1,0 +1,22 @@
+version: 2
+
+# Tables written by the Python matching pipeline (`cip run`). dbt never writes to these; it reads
+# the matching result and builds the analytics layer on top.
+sources:
+  - name: stg
+    schema: stg
+    tables:
+      - name: records
+        description: One normalised row per source record (identifiers validated, hubs not removed).
+
+  - name: resolve
+    schema: resolve
+    tables:
+      - name: person_map
+        description: record_key -> stable person_id for today's clustering.
+      - name: person_registry
+        description: Every person_id ever issued, with status (active, merged, erased).
+      - name: hub_identifiers
+        description: Identifiers shared by too many unrelated records (store phones). Never primary.
+      - name: shared_identifiers
+        description: Identifiers used by more than one person (households, recycled numbers).

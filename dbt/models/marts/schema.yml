@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: dim_customer
+    description: Golden record, one row per active person.
+    columns:
+      - name: person_id
+        description: Stable person ID issued by the matching pipeline.
+        tests: [unique, not_null]
+      - name: n_records
+        tests:
+          - not_null
+          - positive
+      - name: n_sources
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
+      - name: primary_phone_is_shared
+        tests: [not_null]
+
+  - name: bridge_person_record
+    description: One row per source record with its person, for lineage.
+    columns:
+      - name: record_key
+        tests: [unique, not_null]
+      - name: person_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: person_id
+      - name: source
+        tests:
+          - accepted_values:
+              arguments:
+                values: [pos, ecom, crm, loyalty]
+
+  - name: dim_customer_public
+    description: Analytics-safe customer attributes with no direct identifiers.
+    columns:
+      - name: person_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: person_id
+      - name: age_band
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["under_25", "25_34", "35_44", "45_54", "55_plus", "unknown"]  # quoted: YAML reads 25_34 as 2534
+
+  - name: fct_identity_coverage
+    description: Per-source linkage and identifier-usability metrics.
+    columns:
+      - name: source
+        tests: [unique, not_null]
+      - name: share_linked
+        tests:
+          - fraction_between_0_and_1
+      - name: share_with_usable_phone
+        tests:
+          - fraction_between_0_and_1
+
+unit_tests:
+  - name: survivorship_prefers_diacritics_recent_phone_and_never_a_hub
+    description: >
+      Names with diacritics win over the same name without them; the latest usable phone is
+      primary; a hub phone (phone_usable = false) is never chosen even when it is the most recent.
+    model: dim_customer
+    given:
+      - input: ref('int_record_person')
+        rows:
+          - {person_id: P1, record_key: "pos:1", source: pos, event_date: "2026-01-01", name_raw: "NGUYEN VAN AN", name_key: "an nguyen van", email_norm: null, phone_e164: "+84901111111", dob_norm: null, source_trust: 1, name_has_diacritics: false, name_is_upper: false, phone_usable: true, phone_is_shared: false}
+          - {person_id: P1, record_key: "crm:1", source: crm, event_date: "2026-02-01", name_raw: "Nguyễn Văn An", name_key: "an nguyen van", email_norm: "an@x.com", phone_e164: "+84902222222", dob_norm: "1990-05-17", source_trust: 4, name_has_diacritics: true, name_is_upper: false, phone_usable: true, phone_is_shared: false}
+          - {person_id: P1, record_key: "pos:2", source: pos, event_date: "2026-03-01", name_raw: null, name_key: null, email_norm: null, phone_e164: "+84909999999", dob_norm: null, source_trust: 1, name_has_diacritics: false, name_is_upper: false, phone_usable: false, phone_is_shared: false}
+    expect:
+      rows:
+        - {person_id: P1, full_name: "Nguyễn Văn An", primary_phone: "+84902222222", primary_email: "an@x.com", dob: "1990-05-17", n_records: 3, n_sources: 2, source_list: "crm,pos"}
+
+  - name: a_person_with_no_usable_identifier_still_gets_a_row
+    model: dim_customer
+    given:
+      - input: ref('int_record_person')
+        rows:
+          - {person_id: P2, record_key: "pos:9", source: pos, event_date: "2026-04-01", name_raw: null, name_key: null, email_norm: null, phone_e164: null, dob_norm: null, source_trust: 1, name_has_diacritics: false, name_is_upper: false, phone_usable: false, phone_is_shared: false}
+    expect:
+      rows:
+        - {person_id: P2, full_name: null, primary_phone: null, primary_phone_is_shared: false, n_records: 1}
+
+  - name: mixed_case_beats_all_caps_when_both_have_diacritics
+    model: dim_customer
+    given:
+      - input: ref('int_record_person')
+        rows:
+          - {person_id: P3, record_key: "pos:5", source: pos, event_date: "2026-05-01", name_raw: "HOÀNG DUNG", name_key: "dung hoang", email_norm: null, phone_e164: null, dob_norm: null, source_trust: 1, name_has_diacritics: true, name_is_upper: true, phone_usable: false, phone_is_shared: false}
+          - {person_id: P3, record_key: "loyalty:5", source: loyalty, event_date: "2026-05-02", name_raw: "Hoàng Dung", name_key: "dung hoang", email_norm: null, phone_e164: null, dob_norm: null, source_trust: 3, name_has_diacritics: true, name_is_upper: false, phone_usable: false, phone_is_shared: false}
+    expect:
+      rows:
+        - {person_id: P3, full_name: "Hoàng Dung"}

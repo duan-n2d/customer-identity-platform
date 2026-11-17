@@ -94,7 +94,8 @@ def ablation(n_persons: int, seed: int, base: MatchConfig | None = None) -> pd.D
                 MatchConfig(name_constraint=False, dob_constraint=False, threshold=base.threshold),
             ),
             ("+ DOB constraint", MatchConfig(name_constraint=False, threshold=base.threshold)),
-            ("+ name constraint (full)", base),
+            ("+ name constraint", replace(base, name_constraint=True)),
+            ("default profile (name constraint off)", replace(base, name_constraint=False)),
         ]
         rows = []
         models: dict[bool, Path] = {}
@@ -108,14 +109,16 @@ def ablation(n_persons: int, seed: int, base: MatchConfig | None = None) -> pd.D
             )
         # leave-one-out on the full configuration
         for name, mc in [
-            ("full - name constraint", replace(base, name_constraint=False)),
-            ("full - DOB constraint", replace(base, dob_constraint=False)),
-            ("full - shared detection", replace(base, shared_detection=False)),
             (
-                "full - deterministic pass",
+                "default - DOB constraint",
+                replace(base, name_constraint=False, dob_constraint=False),
+            ),
+            ("default - shared detection", replace(base, shared_detection=False)),
+            (
+                "default - deterministic pass",
                 replace(base, deterministic_pass=False, shared_detection=False),
             ),
-            ("full + model cannot-link (<0.02)", replace(base, cannot_link_below=0.02)),
+            ("default + model cannot-link (<0.02)", replace(base, cannot_link_below=0.02)),
         ]:
             result = run_matching(staged, cfg, mc, models[mc.hub_filter], retrain=False)
             rows.append(

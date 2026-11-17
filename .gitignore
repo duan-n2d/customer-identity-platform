@@ -19,3 +19,7 @@ dbt/.user.yml
 
 .env
 .DS_Store
+.demo/
+.venv/
+.ruff_cache/
+.pytest_cache/
