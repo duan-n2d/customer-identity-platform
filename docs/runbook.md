@@ -8,3 +8,4 @@
 | Merge/split rate spikes | monitor | Compare `resolve.person_id_events` against yesterday |
 | Erasure request | | `cip erase <person_id>` (exit 0 only if residue is zero) or the admin API |
 | dbt test fails | `cip dbt` exits 1 | Read the failing test; singular tests guard hubs and PII |
+| Airflow run fails at `quality_gate` | a monitor is at `fail` | Nothing was published; fix the cause (see monitor rows above), clear the task and rerun |

@@ -19,3 +19,16 @@ jobs:
       - run: ruff check src tests
       - run: ruff format --check src tests
       - run: pytest -q
+  airflow-dag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Airflow with its official constraints
+        run: |
+          AF=3.1.0
+          pip install "apache-airflow==${AF}" pytest \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AF}/constraints-3.12.txt"
+      - run: pytest -q tests/test_airflow_dag.py

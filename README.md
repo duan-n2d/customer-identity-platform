@@ -112,7 +112,8 @@ flowchart LR
 ```
 
 More: [architecture](docs/architecture.md) · [decisions](docs/decisions.md) ·
-[runbook](docs/runbook.md) · [Databricks notes](docs/databricks.md)
+[runbook](docs/runbook.md) · [Databricks notes](docs/databricks.md) ·
+[Airflow DAG](dags/cip_daily.py)
 
 ## Quick start
 
@@ -134,6 +135,8 @@ rapidfuzz · pytest + hypothesis · ruff · GitHub Actions.
 ## Honest limits
 
 * Synthetic data. Real data has failure modes the generator does not model.
+* The Airflow DAG ([dags/cip_daily.py](dags/cip_daily.py)) is import- and structure-tested in CI
+  against real Airflow, but has not been executed by a running scheduler.
 * Not run on a real Databricks workspace; the Delta export is verified locally by reading the
   tables back. [docs/databricks.md](docs/databricks.md) lists what is and is not verified.
 * Recall is reported over *linkable* pairs (pairs that share some identifier); the rest of the
