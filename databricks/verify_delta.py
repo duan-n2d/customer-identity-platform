@@ -37,6 +37,7 @@ print(VOLUME)
 # DuckDB needs a normal local disk (Volumes do not support random writes), so the pipeline runs
 # in local scratch space and only the finished Delta folders are copied to the Volume.
 import json
+from pathlib import Path
 import subprocess
 import sys
 
@@ -54,7 +55,7 @@ assert run.returncode == 0, "cip demo failed (dbt checks or pipeline)"
 
 dbutils.fs.rm(f"{VOLUME}/delta", recurse=True)
 dbutils.fs.cp(f"file:{WORK}/delta", f"{VOLUME}/delta", recurse=True)
-manifest = json.loads(open(f"{WORK}/delta/_manifest.json").read())
+manifest = json.loads(Path(f"{WORK}/delta/_manifest.json").read_text())
 print(manifest)
 
 # COMMAND ----------
