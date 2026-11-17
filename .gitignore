@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+*.egg-info/
+dist/
+build/
+
+# Generated data and artifacts (the demo regenerates them)
+data/
+results/
+dbt/target/
+dbt/logs/
+dbt/.user.yml
+*.duckdb
+*.duckdb.wal
+
+.env
+.DS_Store
