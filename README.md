@@ -1,5 +1,7 @@
 # Customer Identity Platform
 
+[![ci](https://github.com/duan-n2d/customer-identity-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/duan-n2d/customer-identity-platform/actions/workflows/ci.yml)
+
 Identity resolution and a Customer 360 for a retailer whose customers exist in four systems
 (POS, e-commerce, CRM, loyalty) with no shared key. The pipeline decides which records are the
 same person, keeps that person's ID **stable** from one daily run to the next, builds the golden
@@ -134,7 +136,6 @@ rapidfuzz · pytest + hypothesis · ruff · GitHub Actions.
 * Synthetic data. Real data has failure modes the generator does not model.
 * Not run on a real Databricks workspace; the Delta export is verified locally by reading the
   tables back. [docs/databricks.md](docs/databricks.md) lists what is and is not verified.
-* The CI workflow is provided but has not been observed running on GitHub yet.
 * Recall is reported over *linkable* pairs (pairs that share some identifier); the rest of the
   true pairs have no shared evidence, so no algorithm could find them.
 * Matching is a full daily recompute (about 20 s for 23k records). That is deliberate and fine
