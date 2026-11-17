@@ -129,9 +129,10 @@ def evaluation_md(run: dict, ablation: pd.DataFrame | None, bench: pd.DataFrame 
         parts += [
             "## Ablation: what each component is worth",
             "",
-            "One world, one trained model, one component changed at a time. Rows 1-6 add "
-            "components "
-            "cumulatively; the rest remove or add one component to the final configuration.",
+            "3,000 people per world, mean over the seeds in `seeds` (columns ending in `_sd` are the "
+            "standard deviation across seeds). One component changed at a time. Rows 1-6 add "
+            "components cumulatively; the rest remove or add one component to the default profile. "
+            "Test seeds 7, 21, 22; dev seeds are in `results/ablation_dev.csv`.",
             "",
             _md_table(
                 ablation,
@@ -139,6 +140,13 @@ def evaluation_md(run: dict, ablation: pd.DataFrame | None, bench: pd.DataFrame 
                     "precision": "{:.4f}",
                     "linkable_recall": "{:.4f}",
                     "linkable_f1": "{:.4f}",
+                    "precision_sd": "{:.4f}",
+                    "linkable_recall_sd": "{:.4f}",
+                    "linkable_f1_sd": "{:.4f}",
+                    "false_merge_pairs": "{:.0f}",
+                    "households": "{:.0f}",
+                    "recycled": "{:.0f}",
+                    "common_name": "{:.0f}",
                 },
             ),
             "",

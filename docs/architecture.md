@@ -1,5 +1,68 @@
 # Architecture
 
+```mermaid
+flowchart LR
+    subgraph SRC["Sources (4 systems)"]
+        direction TB
+        POS[POS]
+        ECOM[E-commerce]
+        CRM[CRM]
+        LOY[Loyalty]
+    end
+
+    subgraph ING["Ingest and quality"]
+        direction TB
+        CON{"YAML data contract"}
+        Q[("Quarantine and alerts")]
+        RAW[("raw")]
+        STG[("stg: normalised")]
+        CON -- "error" --> Q
+        CON -- "pass / warn" --> RAW --> STG
+    end
+
+    subgraph RES["Identity resolution"]
+        direction TB
+        HUB["Hub and shared-identifier detection"]
+        MATCH["Splink model + deterministic rules"]
+        CLU["Constrained clustering"]
+        IDS[("Stable person IDs: registry and events")]
+        HUB --> MATCH --> CLU --> IDS
+    end
+
+    subgraph GOLD["Gold layer (dbt)"]
+        direction TB
+        DIM[("dim_customer")]
+        PUB[("dim_customer_public: no PII")]
+        DBT["32 checks: tests and unit tests"]
+        DIM --- DBT
+        PUB --- DBT
+    end
+
+    subgraph OUT["Consumers"]
+        direction TB
+        API["FastAPI lookup"]
+        DELTA["Delta Lake export"]
+        ERASE["Erasure and residue check"]
+    end
+
+    SRC --> CON
+    STG --> HUB
+    IDS --> DIM
+    IDS --> PUB
+    DIM --> API
+    PUB --> DELTA
+    ERASE -. "deletes from raw, stg, resolve, gold" .-> RAW
+
+    classDef store fill:#e8f1fb,stroke:#2f6db5,color:#0b2a4a
+    classDef logic fill:#fff4d6,stroke:#b8860b,color:#4a3600
+    classDef guard fill:#fde8e8,stroke:#c0392b,color:#5a1410
+    classDef out fill:#e6f6ea,stroke:#2e8b57,color:#0e3b22
+    class RAW,STG,IDS,DIM,PUB store
+    class HUB,MATCH,CLU,DBT logic
+    class CON,Q,ERASE guard
+    class API,DELTA out
+```
+
 ## Layers (DuckDB schemas)
 
 | Schema | Contents |

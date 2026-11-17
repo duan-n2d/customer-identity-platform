@@ -146,3 +146,18 @@ def threshold_sweep(
         return pd.DataFrame(rows).drop(columns="variant")
     finally:
         shutil.rmtree(work, ignore_errors=True)
+
+
+def aggregate_seeds(frames: list[pd.DataFrame]) -> pd.DataFrame:
+    """Mean over seeds per variant (original order), plus the standard deviation of the rates."""
+    allf = pd.concat(frames)
+    order = list(dict.fromkeys(allf["variant"]))
+    by = allf.drop(columns="seed").groupby("variant", sort=False)
+    mean = by.mean(numeric_only=True)
+    out = mean.copy()
+    if len(frames) > 1:
+        sd = by.std(numeric_only=True)
+        for c in ("precision", "linkable_recall", "linkable_f1"):
+            out[f"{c}_sd"] = sd[c]
+    out.insert(0, "seeds", len(frames))
+    return out.loc[order].reset_index()

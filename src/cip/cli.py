@@ -113,12 +113,17 @@ def cmd_dbt(args: argparse.Namespace) -> None:
 
 
 def cmd_ablate(args: argparse.Namespace) -> None:
-    from cip.experiments import ablation
+    from cip.experiments import ablation, aggregate_seeds
 
-    df = ablation(args.persons, args.seed)
+    frames = []
+    for seed in args.seeds:
+        print(f"ablation, seed {seed} ...", flush=True)
+        frames.append(ablation(args.persons, seed).assign(seed=seed))
+    df = aggregate_seeds(frames)
     out = _settings(args).results_dir
     out.mkdir(parents=True, exist_ok=True)
-    df.to_csv(out / "ablation.csv", index=False)
+    df.to_csv(out / args.out, index=False)
+    pd.concat(frames).to_csv(out / args.out.replace(".csv", "_by_seed.csv"), index=False)
     print(df.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 
 
@@ -245,7 +250,8 @@ def main(argv: list[str] | None = None) -> None:
 
     a = sub.add_parser("ablate", help="measure each component's contribution")
     a.add_argument("--persons", type=int, default=3000)
-    a.add_argument("--seed", type=int, default=7)
+    a.add_argument("--seeds", type=int, nargs="+", default=[7, 21, 22])
+    a.add_argument("--out", default="ablation.csv", help="file name inside results/")
     a.set_defaults(fn=cmd_ablate)
 
     b = sub.add_parser("bench", help="time the day-0 pipeline at several sizes")

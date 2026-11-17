@@ -12,17 +12,17 @@ truth, so every number below is measured, not claimed.
 ## Results
 
 <!-- RESULTS:START -->
-Synthetic Vietnamese customer data: **6,000 people**, 23,695 source records across 4 systems, 4 daily increments (seed 7).
+Synthetic Vietnamese customer data: **400 people**, 1,474 source records across 4 systems, 1 daily increments (seed 7).
 
 | Metric | Result |
 |---|---|
-| Precision (linked record pairs that are the same person) | **98.78%** |
-| Recall on pairs that *can* be linked from the identifiers present | **93.69%** |
-| Share of true pairs that share any linking evidence (the data's ceiling) | 39.27% |
-| Person-ID stability, record level, day over day | **99.90% to 100.00%** |
-| Same, with a naive ID (smallest record key of the cluster) | 99.39% to 99.67% |
-| Day-0 load: 21,851 records, train + match + IDs | 24 s |
-| Daily run: ~23,695 records, full re-match | 22 s |
+| Precision (linked record pairs that are the same person) | **98.02%** |
+| Recall on pairs that *can* be linked from the identifiers present | **95.13%** |
+| Share of true pairs that share any linking evidence (the data's ceiling) | 37.10% |
+| Person-ID stability, record level, day over day | **100.00% to 100.00%** |
+| Same, with a naive ID (smallest record key of the cluster) | 99.31% to 99.31% |
+| Day-0 load: 1,439 records, train + match + IDs | 9 s |
+| Daily run: ~1,474 records, full re-match | 4 s |
 <!-- RESULTS:END -->
 
 Full breakdown (per day, error causes, ablation, scale): [docs/evaluation.md](docs/evaluation.md).
@@ -46,19 +46,67 @@ linkable recall; adding a deterministic pass lifts recall to ~99.9% but precisio
 
 ## Architecture
 
-```
-generator -> landing (parquet) -> contracts -> raw -> stg -> hubs/shared -> Splink + rules
-                                     | quarantine                               |
-                                     v                                          v
-                              quality/alerts                     constrained clustering
-                                                                                |
-                                                        stable person IDs (registry, events)
-                                                                                |
-                                     dbt: survivorship, marts, tests <----------+
-                                                |
-                              +-----------------+-----------------+
-                              v                 v                 v
-                       FastAPI lookup     Delta export      erasure + verify
+```mermaid
+flowchart LR
+    subgraph SRC["Sources (4 systems)"]
+        direction TB
+        POS[POS]
+        ECOM[E-commerce]
+        CRM[CRM]
+        LOY[Loyalty]
+    end
+
+    subgraph ING["Ingest and quality"]
+        direction TB
+        CON{"YAML data contract"}
+        Q[("Quarantine and alerts")]
+        RAW[("raw")]
+        STG[("stg: normalised")]
+        CON -- "error" --> Q
+        CON -- "pass / warn" --> RAW --> STG
+    end
+
+    subgraph RES["Identity resolution"]
+        direction TB
+        HUB["Hub and shared-identifier detection"]
+        MATCH["Splink model + deterministic rules"]
+        CLU["Constrained clustering"]
+        IDS[("Stable person IDs: registry and events")]
+        HUB --> MATCH --> CLU --> IDS
+    end
+
+    subgraph GOLD["Gold layer (dbt)"]
+        direction TB
+        DIM[("dim_customer")]
+        PUB[("dim_customer_public: no PII")]
+        DBT["32 checks: tests and unit tests"]
+        DIM --- DBT
+        PUB --- DBT
+    end
+
+    subgraph OUT["Consumers"]
+        direction TB
+        API["FastAPI lookup"]
+        DELTA["Delta Lake export"]
+        ERASE["Erasure and residue check"]
+    end
+
+    SRC --> CON
+    STG --> HUB
+    IDS --> DIM
+    IDS --> PUB
+    DIM --> API
+    PUB --> DELTA
+    ERASE -. "deletes from raw, stg, resolve, gold" .-> RAW
+
+    classDef store fill:#e8f1fb,stroke:#2f6db5,color:#0b2a4a
+    classDef logic fill:#fff4d6,stroke:#b8860b,color:#4a3600
+    classDef guard fill:#fde8e8,stroke:#c0392b,color:#5a1410
+    classDef out fill:#e6f6ea,stroke:#2e8b57,color:#0e3b22
+    class RAW,STG,IDS,DIM,PUB store
+    class HUB,MATCH,CLU,DBT logic
+    class CON,Q,ERASE guard
+    class API,DELTA out
 ```
 
 More: [architecture](docs/architecture.md) · [decisions](docs/decisions.md) ·
