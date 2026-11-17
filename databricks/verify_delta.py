@@ -37,9 +37,9 @@ print(VOLUME)
 # DuckDB needs a normal local disk (Volumes do not support random writes), so the pipeline runs
 # in local scratch space and only the finished Delta folders are copied to the Volume.
 import json
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 WORK = "/local_disk0/cip_work"
 run = subprocess.run(
