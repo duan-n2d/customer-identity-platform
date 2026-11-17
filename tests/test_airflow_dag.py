@@ -19,7 +19,7 @@ def dag():
 
     bag = DagBag(dag_folder=str(DAGS), include_examples=False)
     assert not bag.import_errors, bag.import_errors
-    return bag.get_dag("cip_daily")
+    return bag.dags["cip_daily"]
 
 
 def test_the_gate_sits_between_matching_and_publishing(dag):
