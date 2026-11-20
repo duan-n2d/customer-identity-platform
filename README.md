@@ -97,7 +97,8 @@ flowchart LR
     STG --> HUB
     IDS --> DIM
     IDS --> PUB
-    DIM --> API
+    PUB --> API
+    DIM -. "PII key only" .-> API
     PUB --> DELTA
     ERASE -. "deletes from raw, stg, resolve, gold" .-> RAW
 
@@ -121,7 +122,7 @@ More: [architecture](docs/architecture.md) · [decisions](docs/decisions.md) ·
 pip install -e ".[dev]"
 cip demo                 # generate -> 4 daily runs -> dbt build -> evaluate -> Delta export
 cip report               # regenerate docs/evaluation.md and the results block above
-cip serve                # lookup API on :8000
+CIP_API_KEY=... cip serve  # lookup API on :8000 (refuses lookups without a key)
 pytest                   # unit, property and end-to-end tests
 ```
 
@@ -141,6 +142,9 @@ rapidfuzz · pytest + hypothesis · ruff · GitHub Actions.
   tables back. [docs/databricks.md](docs/databricks.md) lists what is and is not verified.
 * Recall is reported over *linkable* pairs (pairs that share some identifier); the rest of the
   true pairs have no shared evidence, so no algorithm could find them.
+* Person IDs are sequential (`P00000001`), so they are guessable. The API mitigates this with a
+  required key and a public-by-default view (see [architecture](docs/architecture.md#serving));
+  opaque IDs would change the ID stability contract and are not done.
 * Matching is a full daily recompute (about 20 s for 23k records). That is deliberate and fine
   at this scale; beyond a few million records it would need incremental blocking.
 

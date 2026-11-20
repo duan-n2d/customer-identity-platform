@@ -49,7 +49,8 @@ flowchart LR
     STG --> HUB
     IDS --> DIM
     IDS --> PUB
-    DIM --> API
+    PUB --> API
+    DIM -. "PII key only" .-> API
     PUB --> DELTA
     ERASE -. "deletes from raw, stg, resolve, gold" .-> RAW
 
@@ -97,3 +98,21 @@ is the `resolve.person_map` table.
 
 `GET /v1/persons/{id}` (301 for merged IDs, 410 for erased), `POST /v1/resolve` (phone/email in
 the body, never the URL), `DELETE /v1/subjects/{id}` (admin key; disabled until configured).
+`GET /health` is open.
+
+Access is fail-closed and has two scopes:
+
+| Scope | Headers | `GET /v1/persons/{id}` | `POST /v1/resolve` |
+|---|---|---|---|
+| none / wrong key | | 401 | 401 |
+| `CIP_API_KEY` unset | | 503 | 503 |
+| public | `X-API-Key` = `CIP_API_KEY` | `gold.dim_customer_public` row (age band, has phone/email, source counts; no name, phone, email or DOB); `?view=pii` is 403 | a unique match returns its `person_id`; hub, shared and ambiguous numbers all return `reason: "no_unique_match"` with no candidate count |
+| pii | also `X-PII-Key` = `CIP_API_PII_KEY` | `?view=pii` returns the full `gold.dim_customer` record | detailed reasons (`hub_identifier`, `shared_identifier`, `ambiguous`) and candidate counts |
+
+With `CIP_API_PII_KEY` unset the PII scope does not exist, so the API never serves direct
+identifiers. Keys are compared with `secrets.compare_digest`.
+
+Known limitation: person IDs are sequential (`P00000001`), so they can be enumerated. The key
+requirement (and 401 before any 404) means an outsider cannot probe IDs at all, and a holder of
+the ordinary key only sees the public view. Opaque IDs would be stronger but change the ID
+stability contract, so they are left for later.

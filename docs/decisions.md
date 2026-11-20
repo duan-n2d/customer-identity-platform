@@ -63,3 +63,10 @@ analytics export excludes direct identifiers.
 
 ## 8. Lookups are POST
 A phone or email in a query string ends up in access logs.
+
+## 9. The API is public by default and fails closed
+Lookups need `X-API-Key`; with `CIP_API_KEY` unset they return 503 rather than serve anyone.
+The default person view is `dim_customer_public`, the same analytics-safe model the Delta export
+uses. Names, phones, emails and DOB need a second key (`X-PII-Key`), and so do the details of
+why `/v1/resolve` would not pick an owner: "this number is shared by a household of three" is
+itself membership information. IDs stay sequential (see the architecture note).
