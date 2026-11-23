@@ -8,24 +8,27 @@ The data is synthetic with a hidden ground truth, so every claim below is checka
 
 ## Headline
 
-Synthetic Vietnamese customer data: **400 people**, 1,474 source records across 4 systems, 1 daily increments (seed 7).
+Synthetic Vietnamese customer data: **6,000 people**, 23,695 source records across 4 systems, 4 daily increments (seed 7).
 
 | Metric | Result |
 |---|---|
-| Precision (linked record pairs that are the same person) | **98.02%** |
-| Recall on pairs that *can* be linked from the identifiers present | **95.13%** |
-| Share of true pairs that share any linking evidence (the data's ceiling) | 37.10% |
-| Person-ID stability, record level, day over day | **100.00% to 100.00%** |
-| Same, with a naive ID (smallest record key of the cluster) | 99.31% to 99.31% |
-| Day-0 load: 1,439 records, train + match + IDs | 3 s |
-| Daily run: ~1,474 records, full re-match | 1 s |
+| Precision (linked record pairs that are the same person) | **98.78%** |
+| Recall on pairs that *can* be linked from the identifiers present | **93.69%** |
+| Share of true pairs that share any linking evidence (the data's ceiling) | 39.27% |
+| Person-ID stability, record level, day over day | **99.90% to 100.00%** |
+| Same, with a naive ID (smallest record key of the cluster) | 99.39% to 99.67% |
+| Day-0 load: 21,851 records, train + match + IDs | 24 s |
+| Daily run: ~23,695 records, full re-match | 17 s |
 
 ## Day by day
 
 | day | records | people | precision | linkable recall | ID unchanged | naive ID unchanged | new/merge/split | seconds |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 1439 | 913 | 0.9804 | 0.9516 | 1.0000 | 1.0000 | 913/0/0 | 2.7 |
-| 1 | 1474 | 931 | 0.9802 | 0.9513 | 1.0000 | 0.9931 | 18/0/0 | 1.0 |
+| 0 | 21851 | 13570 | 0.9874 | 0.9373 | 1.0000 | 1.0000 | 13570/0/0 | 23.7 |
+| 1 | 22140 | 13724 | 0.9870 | 0.9367 | 0.9990 | 0.9954 | 152/6/8 | 17.6 |
+| 2 | 22490 | 13923 | 0.9866 | 0.9367 | 1.0000 | 0.9967 | 198/0/1 | 17.4 |
+| 3 | 22939 | 14161 | 0.9869 | 0.9362 | 0.9997 | 0.9952 | 236/2/4 | 17.8 |
+| 4 | 23695 | 14520 | 0.9878 | 0.9369 | 0.9991 | 0.9939 | 361/7/5 | 17.1 |
 
 `ID unchanged` is the share of records that kept their person ID since the previous day (day 0 has nothing to compare with). `naive ID` is what you get if the ID is just the smallest record key of the cluster: it changes whenever an earlier record is back-filled or two clusters merge.
 
@@ -35,43 +38,15 @@ False merges (record pairs linked that are different people), by trap:
 
 | household | recycled_phone | common_name | other |
 |---|---|---|---|
-| 6 | 1 | 0 | 13 |
+| 103 | 47 | 58 | 0 |
 
 Missed links (record pairs of one person left apart), by trap:
 
 | phone_changed | recycled_phone | household | other |
 |---|---|---|---|
-| 169 | 85 | 236 | 1126 |
+| 1928 | 1349 | 3726 | 19397 |
 
-Largest cluster: 8 records. People split across clusters: 290 of 404.
-
-## Ablation: what each component is worth
-
-3,000 people per world, mean over the seeds in `seeds` (columns ending in `_sd` are the standard deviation across seeds). One component changed at a time. Rows 1-6 add components cumulatively; the rest remove or add one component to the default profile. Test seeds 7, 21, 22; dev seeds are in `results/ablation_dev.csv`.
-
-| variant | seeds | precision | linkable_recall | linkable_f1 | false_merge_pairs | households | recycled | common_name | precision_sd | linkable_recall_sd | linkable_f1_sd |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Splink only (no guards) | 3 | 0.9585 | 0.5374 | 0.6887 | 197 | 41 | 26 | 111 | 0.0167 | 0.0056 | 0.0088 |
-| + hub filter | 3 | 0.9877 | 0.5374 | 0.6961 | 57 | 42 | 1 | 10 | 0.0080 | 0.0049 | 0.0060 |
-| + deterministic pass | 3 | 0.8215 | 0.9983 | 0.9006 | 1825 | 1073 | 622 | 121 | 0.0567 | 0.0005 | 0.0341 |
-| + shared-identifier detection | 3 | 0.9814 | 0.9373 | 0.9588 | 148 | 100 | 25 | 18 | 0.0021 | 0.0029 | 0.0005 |
-| + DOB constraint | 3 | 0.9840 | 0.9372 | 0.9600 | 127 | 80 | 25 | 16 | 0.0012 | 0.0029 | 0.0014 |
-| + name constraint | 3 | 0.9875 | 0.9144 | 0.9495 | 96 | 56 | 25 | 11 | 0.0026 | 0.0053 | 0.0030 |
-| default profile (name constraint off) | 3 | 0.9840 | 0.9372 | 0.9600 | 127 | 80 | 25 | 16 | 0.0012 | 0.0029 | 0.0014 |
-| default - DOB constraint | 3 | 0.9814 | 0.9373 | 0.9588 | 148 | 100 | 25 | 18 | 0.0021 | 0.0029 | 0.0005 |
-| default - shared detection | 3 | 0.8576 | 0.9910 | 0.9188 | 1385 | 662 | 600 | 117 | 0.0588 | 0.0017 | 0.0343 |
-| default - deterministic pass | 3 | 0.9919 | 0.5374 | 0.6971 | 37 | 23 | 1 | 9 | 0.0048 | 0.0049 | 0.0052 |
-| default + model cannot-link (<0.02) | 3 | 0.9866 | 0.8727 | 0.9261 | 99 | 59 | 23 | 12 | 0.0013 | 0.0058 | 0.0027 |
-
-## Scale
-
-Day-0 pipeline (landing, staging, hubs, model training, scoring, rules, clustering, IDs) on one machine, DuckDB, single process:
-
-| persons | records | seconds | records_per_second |
-|---|---|---|---|
-| 2000.0 | 7491.0 | 14.8 | 507 |
-| 6000.0 | 22275.0 | 18.1 | 1,229 |
-| 12000.0 | 44635.0 | 28.9 | 1,543 |
+Largest cluster: 10 records. People split across clusters: 4,466 of 6,240.
 
 ## Method
 
@@ -82,9 +57,9 @@ Day-0 pipeline (landing, staging, hubs, model training, scoring, rules, clusteri
 ```json
 {
   "world": {
-    "n_persons": 400,
+    "n_persons": 6000,
     "seed": 7,
-    "days": 1,
+    "days": 4,
     "backlog_days": 730,
     "household_share": 0.12,
     "recycled_share": 0.03,
@@ -113,9 +88,9 @@ Day-0 pipeline (landing, staging, hubs, model training, scoring, rules, clusteri
     "max_cluster_size": 25
   },
   "settings": {
-    "data_dir": "C:\\Users\\dnguye22\\AppData\\Local\\Temp\\pytest-of-dnguye22\\pytest-23\\test_the_cli_demo_runs_every_s0",
-    "hub_min_records": 8,
-    "hub_min_distinct_names": 5,
+    "data_dir": "data",
+    "hub_min_records": 40,
+    "hub_min_distinct_names": 12,
     "predict_threshold": 0.5,
     "cluster_threshold": 0.9,
     "max_cluster_size": 25,

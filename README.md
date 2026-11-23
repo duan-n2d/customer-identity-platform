@@ -14,17 +14,17 @@ truth, so every number below is measured, not claimed.
 ## Results
 
 <!-- RESULTS:START -->
-Synthetic Vietnamese customer data: **400 people**, 1,474 source records across 4 systems, 1 daily increments (seed 7).
+Synthetic Vietnamese customer data: **6,000 people**, 23,695 source records across 4 systems, 4 daily increments (seed 7).
 
 | Metric | Result |
 |---|---|
-| Precision (linked record pairs that are the same person) | **98.02%** |
-| Recall on pairs that *can* be linked from the identifiers present | **95.13%** |
-| Share of true pairs that share any linking evidence (the data's ceiling) | 37.10% |
-| Person-ID stability, record level, day over day | **100.00% to 100.00%** |
-| Same, with a naive ID (smallest record key of the cluster) | 99.31% to 99.31% |
-| Day-0 load: 1,439 records, train + match + IDs | 3 s |
-| Daily run: ~1,474 records, full re-match | 1 s |
+| Precision (linked record pairs that are the same person) | **98.78%** |
+| Recall on pairs that *can* be linked from the identifiers present | **93.69%** |
+| Share of true pairs that share any linking evidence (the data's ceiling) | 39.27% |
+| Person-ID stability, record level, day over day | **99.90% to 100.00%** |
+| Same, with a naive ID (smallest record key of the cluster) | 99.39% to 99.67% |
+| Day-0 load: 21,851 records, train + match + IDs | 24 s |
+| Daily run: ~23,695 records, full re-match | 17 s |
 <!-- RESULTS:END -->
 
 Full breakdown (per day, error causes, ablation, scale): [docs/evaluation.md](docs/evaluation.md).
